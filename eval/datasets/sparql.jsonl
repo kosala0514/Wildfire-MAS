@@ -1,0 +1,2 @@
+{"question": "List all known sites with their coordinates", "gold_cq": "CQL09", "gold_params": {}}
+{"question": "Which hotspot detections are classified as persistent static heat sources?", "gold_sparql": "PREFIX ffo: <http://purl.org/ffonto#>\nPREFIX ffontov: <http://purl.org/ffonto/vocab#>\nSELECT ?h WHERE { ?c ffo:aboutRecord ?h ; ffo:detectionCategory ffontov:PersistentStaticHeatSource }"}

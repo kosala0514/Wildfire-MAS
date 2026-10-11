@@ -1,0 +1,190 @@
+# Competency questions for the live-data module, used by the KG agent. FFOnto's own CQ01-CQ26 are
+# served from the ffonto-v2 project (settings: ffonto_v2.path) and are not repeated here.
+#
+# Fields
+#   id, question            the CQ and its natural-language form
+#   intents                 planner intents this CQ serves
+#   params                  name -> {type: iri|float|int|string|datetime, default?, derived?}
+#   required_vars           sufficiency: these must be bound in at least `min_rows` rows
+#   relax                   IORS ladder: params to widen, in order, if evidence is insufficient
+#   post_filter             optional Python filter applied to rows (e.g. exact distance)
+#   sparql                  query template; {{param}} placeholders are typed and escaped
+
+- id: CQL01
+  question: "Which satellite hotspots were detected within {radius_km} km of a location in the last {days} days, and which are likely wildfires?"
+  intents: [situational_awareness, hazard_advice, trend]
+  params:
+    lat: {type: float}
+    lon: {type: float}
+    radius_km: {type: float, default: 10}
+    days: {type: int, default: 2}
+  required_vars: [h]
+  relax: {radius_km: [10, 25, 50], days: [1, 2, 5]}
+  post_filter: {kind: distance, lat: lat, lon: lon, radius: radius_km, row_lat: lat, row_lon: lon}
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT ?h ?lat ?lon ?t ?frp ?product ?category ?wildfire ?confidence (GROUP_CONCAT(?reason; separator=" | ") AS ?reasons)
+    WHERE {
+      ?h a ffo:SatelliteHotspot ; ffo:latitude ?lat ; ffo:longitude ?lon ; ffo:acquiredAt ?t ; ffo:fromProduct ?product .
+      OPTIONAL { ?h ffo:frpMW ?frp }
+      ?c ffo:aboutHotspot ?h ; ffo:confidence ?confidence ; ffo:isWildfireEvidence ?wildfire ;
+         ffo:detectionCategory ?cat .
+      ?cat skos:prefLabel ?category .
+      OPTIONAL { ?c ffo:classificationReason ?reason }
+      FILTER(?lat >= {{lat_min}} && ?lat <= {{lat_max}} && ?lon >= {{lon_min}} && ?lon <= {{lon_max}})
+      FILTER(?t >= {{since}})
+    }
+    GROUP BY ?h ?lat ?lon ?t ?frp ?product ?category ?wildfire ?confidence
+    ORDER BY DESC(?wildfire) DESC(?t)
+
+- id: CQL02
+  question: "Which live hazards were derived for a site, by which rule, from which evidence, and what actions mitigate them?"
+  intents: [hazard_advice, situational_awareness]
+  params:
+    site: {type: iri}
+  required_vars: [hz]
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    SELECT ?hz ?hazard ?rule ?explanation ?raised (GROUP_CONCAT(DISTINCT ?ev; separator=" ") AS ?evidence)
+           (GROUP_CONCAT(DISTINCT ?actionLabel; separator=" | ") AS ?actions)
+    WHERE {
+      ?hz a ffo:LiveHazard ; ffo:affectsSite {{site}} ; ffo:hasHazardType ?ht ; ffo:derivedByRule ?rule ;
+          rdfs:comment ?explanation .
+      ?ht skos:prefLabel ?hazard .
+      OPTIONAL { ?hz prov:wasDerivedFrom ?ev }
+      OPTIONAL { ?hz ffo:raisedDangerClass/skos:prefLabel ?raised }
+      OPTIONAL { ?ht ffo:mitigatedBy/skos:prefLabel ?actionLabel }
+    }
+    GROUP BY ?hz ?hazard ?rule ?explanation ?raised
+    ORDER BY ?rule
+
+- id: CQL03
+  question: "What is the latest Fire Weather Index at a site, its danger class, and its trend over the last week?"
+  intents: [situational_awareness, trend, data_lookup, hazard_advice]
+  params:
+    site: {type: iri}
+  required_vars: [date, fwi]
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT ?w ?date ?fwi ?ffmc ?dmc ?dc ?isi ?bui ?tempC ?rhPct ?windKmh ?rainMm ?danger
+    WHERE {
+      ?w a ffo:LiveWeatherRecord ; ffo:atSite {{site}} ; ffo:observationDate ?date ; ffo:fwi ?fwi .
+      OPTIONAL { ?w ffo:ffmc ?ffmc ; ffo:dmc ?dmc ; ffo:dc ?dc ; ffo:isi ?isi ; ffo:bui ?bui }
+      OPTIONAL { ?w ffo:airTemperatureC ?tempC }
+      OPTIONAL { ?w ffo:relativeHumidityPct ?rhPct }
+      OPTIONAL { ?w ffo:windSpeedKmh ?windKmh }
+      OPTIONAL { ?w ffo:rainMm ?rainMm }
+      OPTIONAL { ?w ffo:dangerClass/skos:prefLabel ?danger }
+    }
+    ORDER BY ?date
+
+- id: CQL04
+  question: "Which live fire events (hotspot clusters) are near a site, how large are they and are they growing?"
+  intents: [situational_awareness, trend, hazard_advice]
+  params:
+    site: {type: iri}
+  required_vars: [ev]
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    SELECT ?ev ?eventCode ?firstSeen ?lastSeen ?count ?totalFrp ?growth
+    WHERE {
+      ?ev a ffo:LiveFireEvent ; ffo:nearSite {{site}} ; ffo:firstSeen ?firstSeen ; ffo:lastSeen ?lastSeen ;
+          ffo:hotspotCount ?count ; ffo:totalFrpMW ?totalFrp .
+      OPTIONAL { ?ev ffo:eventCode ?eventCode }
+      OPTIONAL { ?hz ffo:inEvent ?ev ; ffo:frpGrowthRatio ?growth }
+    }
+    ORDER BY DESC(?lastSeen)
+
+- id: CQL05
+  question: "Where and when was a selected record captured, and which fire event is it about?"
+  intents: [situational_awareness, hazard_advice, data_lookup, trend]
+  params:
+    record: {type: iri}
+  required_vars: [wkt]
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    SELECT ?wkt ?captureTime ?event ?eventCode ?site ?siteName WHERE {
+      OPTIONAL { {{record}} ffo:centerWKT ?wkt }
+      OPTIONAL { {{record}} ffo:captureTime ?captureTime }
+      OPTIONAL { {{record}} ffo:aboutEvent ?event . OPTIONAL { ?event ffo:eventCode ?eventCode } }
+      OPTIONAL { {{record}} ffo:atSite ?site . OPTIONAL { ?site ffo:siteName ?siteName } }
+    } LIMIT 1
+
+- id: CQL06
+  question: "Which response actions mitigate a given hazard concept?"
+  intents: [hazard_advice, explanation]
+  params:
+    hazard: {type: iri}
+  required_vars: [action]
+  # passes as soon as ffonto-live-vocab.ttl is loaded (checks the vocab import + namespaces)
+  expect: {params: {hazard: "http://purl.org/ffonto/vocab#NearbyActiveFire"}, min_rows: 3,
+           contains: {actionLabel: "evacuation"}}
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT ?hazardLabel ?action ?actionLabel WHERE {
+      {{hazard}} skos:prefLabel ?hazardLabel ; ffo:mitigatedBy ?action .
+      ?action skos:prefLabel ?actionLabel .
+    }
+
+- id: CQL07
+  question: "How many thermal anomalies in an area are not wildfires (industrial, volcanic, offshore, persistent or low-confidence)?"
+  intents: [situational_awareness, data_lookup]
+  params:
+    lat_min: {type: float}
+    lat_max: {type: float}
+    lon_min: {type: float}
+    lon_max: {type: float}
+    days: {type: int, default: 2}
+  required_vars: [category]
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    SELECT ?category ?wildfire (COUNT(?h) AS ?n) WHERE {
+      ?h a ffo:SatelliteHotspot ; ffo:latitude ?lat ; ffo:longitude ?lon ; ffo:acquiredAt ?t .
+      ?c ffo:aboutHotspot ?h ; ffo:isWildfireEvidence ?wildfire ; ffo:detectionCategory/skos:prefLabel ?category .
+      FILTER(?lat >= {{lat_min}} && ?lat <= {{lat_max}} && ?lon >= {{lon_min}} && ?lon <= {{lon_max}})
+      FILTER(?t >= {{since}})
+    }
+    GROUP BY ?category ?wildfire ORDER BY DESC(?n)
+
+- id: CQL08
+  question: "Does satellite evidence disagree with a selected image about fire?"
+  intents: [situational_awareness, hazard_advice]
+  params:
+    record: {type: iri}
+  required_vars: [hz]
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    PREFIX ffv: <http://purl.org/ffonto/vocab#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX prov: <http://www.w3.org/ns/prov#>
+    SELECT ?hz ?explanation (GROUP_CONCAT(?ev; separator=" ") AS ?evidence) WHERE {
+      ?hz a ffo:LiveHazard ; ffo:hasHazardType ffv:SatelliteSceneConflict ; prov:wasDerivedFrom {{record}} ;
+          rdfs:comment ?explanation .
+      OPTIONAL { ?hz prov:wasDerivedFrom ?ev }
+    } GROUP BY ?hz ?explanation
+
+- id: CQL09
+  question: "Which sites have a location, and where are they?"
+  intents: [situational_awareness, data_lookup]
+  params: {}
+  required_vars: [site]
+  sparql: |
+    PREFIX ffo: <http://purl.org/ffonto#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+    SELECT ?site ?label ?lat ?lon ?wkt WHERE {
+      ?site a ffo:Site .
+      OPTIONAL { ?site rdfs:label ?l }
+      OPTIONAL { ?site ffo:siteName ?n }
+      BIND(COALESCE(?l, ?n) AS ?label)
+      OPTIONAL { ?site ffo:latitude ?lat ; ffo:longitude ?lon }
+      OPTIONAL { ?site geo:hasGeometry/geo:asWKT ?wkt }
+      FILTER(BOUND(?lat) || BOUND(?wkt))
+    }

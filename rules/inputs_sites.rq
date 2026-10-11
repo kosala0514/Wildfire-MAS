@@ -1,0 +1,15 @@
+# Rule inputs: sites that have a location. FFOnto sites (ffonto:siteName, grid cells) have no
+# coordinates; add ffonto:latitude/longitude (or a GeoSPARQL WKT point) to a site to include it.
+# Sites registered by the MAS for a question (a place, coordinates or a record) always have them.
+PREFIX ffo: <http://purl.org/ffonto#>
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?site ?label ?lat ?lon ?wkt WHERE {
+  ?site a ffo:Site .
+  OPTIONAL { ?site rdfs:label ?l }
+  OPTIONAL { ?site ffo:siteName ?n }
+  BIND(COALESCE(?l, ?n) AS ?label)
+  OPTIONAL { ?site ffo:latitude ?lat ; ffo:longitude ?lon }
+  OPTIONAL { ?site geo:hasGeometry/geo:asWKT ?wkt }
+  FILTER(BOUND(?lat) || BOUND(?wkt))
+}

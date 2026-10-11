@@ -1,0 +1,53 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ffonto:  <http://purl.org/ffonto#> .
+@prefix ffv:  <http://purl.org/ffonto/vocab#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# SHACL data-quality shapes for the live and inferred-live graphs (wfmas shacl, or GraphDB SHACL).
+
+ffonto:SatelliteHotspotShape a sh:NodeShape ;
+    sh:targetClass ffonto:SatelliteHotspot ;
+    sh:property [ sh:path ffonto:acquiredAt ; sh:datatype xsd:dateTime ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ffonto:latitude ; sh:datatype xsd:decimal ; sh:minCount 1 ;
+                  sh:minInclusive -90 ; sh:maxInclusive 90 ] ;
+    sh:property [ sh:path ffonto:longitude ; sh:datatype xsd:decimal ; sh:minCount 1 ;
+                  sh:minInclusive -180 ; sh:maxInclusive 180 ] ;
+    sh:property [ sh:path ffonto:fromProduct ; sh:minCount 1 ;
+                  sh:in ( "MODIS_NRT" "MODIS_SP" "VIIRS_SNPP_NRT" "VIIRS_SNPP_SP" "VIIRS_NOAA20_NRT"
+                          "VIIRS_NOAA20_SP" "VIIRS_NOAA21_NRT" "LANDSAT_NRT" ) ] ;
+    sh:property [ sh:path ffonto:frpMW ; sh:datatype xsd:double ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path geo:hasGeometry ; sh:minCount 1 ] ;
+    sh:property [ sh:path prov:wasGeneratedBy ; sh:minCount 1 ] .
+
+ffonto:HotspotClassificationShape a sh:NodeShape ;
+    sh:targetClass ffonto:HotspotClassification ;
+    sh:property [ sh:path ffonto:aboutHotspot ; sh:class ffonto:SatelliteHotspot ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ffonto:confidence ; sh:datatype xsd:double ; sh:minCount 1 ;
+                  sh:minInclusive 0 ; sh:maxInclusive 1 ] ;
+    sh:property [ sh:path ffonto:detectionCategory ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( ffv:LikelyVegetationFire ffv:LowConfidenceDetection ffv:PersistentStaticHeatSource
+                          ffv:StaticLandHeatSource ffv:VolcanicHeatSource ffv:OffshoreHeatSource ) ] ;
+    sh:property [ sh:path ffonto:isWildfireEvidence ; sh:datatype xsd:boolean ; sh:minCount 1 ] ;
+    sh:property [ sh:path ffonto:classificationReason ; sh:minCount 1 ] .
+
+ffonto:LiveWeatherRecordShape a sh:NodeShape ;
+    sh:targetClass ffonto:LiveWeatherRecord ;
+    sh:property [ sh:path ffonto:atSite ; sh:class ffonto:Site ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ffonto:observationDate ; sh:datatype xsd:dateTime ; sh:minCount 1 ; sh:maxCount 1 ] ;
+    sh:property [ sh:path ffonto:relativeHumidityPct ; sh:datatype xsd:double ; sh:minInclusive 0 ; sh:maxInclusive 100 ] ;
+    sh:property [ sh:path ffonto:ffmc ; sh:datatype xsd:double ; sh:minInclusive 0 ; sh:maxInclusive 101 ] ;
+    sh:property [ sh:path ffonto:dmc ; sh:datatype xsd:double ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path ffonto:dc ; sh:datatype xsd:double ; sh:minInclusive 0 ] ;
+    sh:property [ sh:path ffonto:fwi ; sh:datatype xsd:double ; sh:minInclusive 0 ; sh:maxCount 1 ] .
+
+ffonto:LiveHazardShape a sh:NodeShape ;
+    sh:targetClass ffonto:LiveHazard ;
+    sh:property [ sh:path ffonto:hasHazardType ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:in ( ffv:NearbyActiveFire ffv:SpreadingFire ffv:ElevatedDangerNearActiveFire ffv:SatelliteSceneConflict ) ] ;
+    sh:property [ sh:path ffonto:derivedByRule ; sh:minCount 1 ; sh:pattern "^R(09|1[0-2])$" ] ;
+    sh:property [ sh:path prov:wasDerivedFrom ; sh:minCount 1 ] ;
+    sh:property [ sh:path rdfs:comment ; sh:minCount 1 ] .

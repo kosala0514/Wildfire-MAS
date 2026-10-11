@@ -1,0 +1,8 @@
+# Rule inputs: live hotspots that count as wildfire evidence.
+PREFIX ffo: <http://purl.org/ffonto#>
+SELECT ?h ?lat ?lon ?t ?frp ?product WHERE {
+  ?h a ffo:SatelliteHotspot ;
+     ffo:latitude ?lat ; ffo:longitude ?lon ; ffo:acquiredAt ?t ; ffo:fromProduct ?product .
+  OPTIONAL { ?h ffo:frpMW ?frp }
+  ?c ffo:aboutHotspot ?h ; ffo:isWildfireEvidence true .
+}

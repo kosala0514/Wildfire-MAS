@@ -1,0 +1,2 @@
+model,n,errors,intent_correct_mean,cq_correct_mean,route_correct_mean,valid_json_mean,correct_mean,intent_correct_ci95,cq_correct_ci95,route_correct_ci95,valid_json_ci95,correct_ci95,latency_p50,latency_p95,tokens_per_item
+qwen2.5:14b,50,0,0.960,0.720,1.000,1.000,0.720,"[0.900, 1.000]","[0.600, 0.840]","[1.000, 1.000]","[1.000, 1.000]","[0.600, 0.840]",1.449,1.478,2454.940

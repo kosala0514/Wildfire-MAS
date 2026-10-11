@@ -1,0 +1,15 @@
+# Reference only: R09 written as GeoSPARQL, for repositories with the GraphDB
+# GeoSPARQL plugin enabled. The default engine (rules.engine: python) computes the
+# same result in Python, so GeoSPARQL is not required to run the system.
+PREFIX ffo:  <http://purl.org/ffonto#>
+PREFIX ffv:  <http://purl.org/ffonto/vocab#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+PREFIX uom:  <http://www.opengis.net/def/uom/OGC/1.0/>
+SELECT ?site ?h ?km WHERE {
+  ?site a ffo:Site ; geo:hasGeometry/geo:asWKT ?sw .
+  ?h a ffo:SatelliteHotspot ; geo:hasGeometry/geo:asWKT ?hw .
+  ?c ffo:aboutHotspot ?h ; ffo:isWildfireEvidence true .
+  BIND(geof:distance(?sw, ?hw, uom:metre) / 1000 AS ?km)
+  FILTER(?km <= 10)
+}

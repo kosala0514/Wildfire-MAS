@@ -1,0 +1,11 @@
+# Rule inputs for R12: georeferenced image records with their fire-class observation and threshold
+# (FFOnto image model: centerWKT, captureTime, hasObservation -> predictedClass ffontov:Fire,
+#  confidence, usedThreshold/thresholdValue; the event via aboutEvent).
+PREFIX ffo: <http://purl.org/ffonto#>
+PREFIX ffv: <http://purl.org/ffonto/vocab#>
+SELECT ?rec ?wkt ?t ?score ?threshold ?event WHERE {
+  ?rec a ffo:ImageRecord ; ffo:centerWKT ?wkt ; ffo:hasObservation ?o .
+  ?o ffo:predictedClass ffv:Fire ; ffo:confidence ?score ; ffo:usedThreshold/ffo:thresholdValue ?threshold .
+  OPTIONAL { ?rec ffo:captureTime ?t }
+  OPTIONAL { ?rec ffo:aboutEvent ?event }
+}

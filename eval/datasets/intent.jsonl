@@ -1,0 +1,11 @@
+{"question": "Any active fires around Badulla in the last 24 hours?", "intent": "situational_awareness"}
+{"question": "Is the area around Sigiriya burning right now?", "intent": "situational_awareness"}
+{"question": "What dangers do the crew face at this site and how do we respond?", "intent": "hazard_advice"}
+{"question": "Is there an explosion risk near the selected drone image?", "intent": "hazard_advice"}
+{"question": "What fire score did CLIP give image 042?", "intent": "data_lookup"}
+{"question": "Which audio clips contain explosion sounds?", "intent": "data_lookup"}
+{"question": "Has the fire weather index been rising at this site this week?", "intent": "trend", "cq": "CQL03"}
+{"question": "Is the fire cluster near Ella getting bigger?", "intent": "trend", "cq": "CQL04"}
+{"question": "What does the Buildup Index measure?", "intent": "explanation"}
+{"question": "Why do gas flares show up as satellite hotspots?", "intent": "explanation"}
+{"question": "good morning", "intent": "chitchat"}

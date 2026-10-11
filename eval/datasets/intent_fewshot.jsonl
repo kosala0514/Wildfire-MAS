@@ -1,0 +1,17 @@
+{"question": "Are there any active fires near Kandy right now?", "intent": "situational_awareness"}
+{"question": "Is anything burning within 20 km of this site today?", "intent": "situational_awareness"}
+{"question": "Show the latest hotspots in Sri Lanka", "intent": "situational_awareness"}
+{"question": "What hazards are present and what should we do?", "intent": "hazard_advice"}
+{"question": "Is it safe for the crew to stay at the selected location?", "intent": "hazard_advice"}
+{"question": "Which PPE is missing for the firefighters in this image?", "intent": "hazard_advice"}
+{"question": "Should we evacuate the village near the fire?", "intent": "hazard_advice"}
+{"question": "What was the CLIP fire score and threshold for image 081?", "intent": "data_lookup", "cq": null}
+{"question": "Which sound events were detected in the audio clip?", "intent": "data_lookup", "cq": null}
+{"question": "List the weather records for event 12", "intent": "data_lookup", "cq": null}
+{"question": "How has the FWI changed over the last week at this site?", "intent": "trend", "cq": "CQL03"}
+{"question": "Is the fire near Anuradhapura growing?", "intent": "trend", "cq": "CQL04"}
+{"question": "How does FWI relate to fire spread?", "intent": "explanation"}
+{"question": "What is a crown fire?", "intent": "explanation"}
+{"question": "Why are propane tanks dangerous in wildfires?", "intent": "explanation"}
+{"question": "hello", "intent": "chitchat"}
+{"question": "what can you do?", "intent": "chitchat"}

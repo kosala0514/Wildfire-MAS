@@ -1,0 +1,3 @@
+[console_scripts]
+wfmas = wildfire_mas.cli:main
+wfmas-eval = wildfire_mas.evaluation.harness:main

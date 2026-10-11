@@ -1,0 +1,536 @@
+{
+  "question": "Are there any fires near Kandy right now?",
+  "answer_markdown": "**Situation**\nThere have been three thermal detections within 50 km of Kandy over the last five days, all classified as likely vegetation fires. [LIVE2]\n\n**Data gaps**\nNo fire danger information is available due to a weather data retrieval error. There are no live hazards or actions derived for Kandy according to the knowledge graph rules and queries. [KG1, KG2, KG3]",
+  "sections": [
+    {
+      "title": "Situation",
+      "sentences": [
+        {
+          "text": "There have been three thermal detections within 50 km of Kandy over the last five days, all classified as likely vegetation fires.",
+          "cites": [
+            "LIVE2"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Data gaps",
+      "sentences": [
+        {
+          "text": "No fire danger information is available due to a weather data retrieval error.",
+          "cites": []
+        },
+        {
+          "text": "There are no live hazards or actions derived for Kandy according to the knowledge graph rules and queries.",
+          "cites": [
+            "KG1",
+            "KG2",
+            "KG3"
+          ]
+        }
+      ]
+    }
+  ],
+  "intent": "situational_awareness",
+  "urgency": "normal",
+  "classification": {
+    "intent": "situational_awareness",
+    "urgency": "normal",
+    "place": "Kandy",
+    "lat": null,
+    "lon": null,
+    "days": null,
+    "cq": null,
+    "topic": null,
+    "_source": "llm",
+    "_plan_source": "template"
+  },
+  "plan": {
+    "intent": "situational_awareness",
+    "urgency": "normal",
+    "steps": [
+      {
+        "id": "s1",
+        "agent": "resolve",
+        "task": "resolve record / place to site and coordinates",
+        "params": {
+          "place": "Kandy",
+          "lat": null,
+          "lon": null
+        },
+        "after": [],
+        "optional": false
+      },
+      {
+        "id": "s2",
+        "agent": "live_data",
+        "task": "FIRMS hotspots around the location",
+        "params": {
+          "kind": "hotspots",
+          "days": 2
+        },
+        "after": [
+          "s1"
+        ],
+        "optional": false
+      },
+      {
+        "id": "s3",
+        "agent": "live_data",
+        "task": "current weather and FWI at the location",
+        "params": {
+          "kind": "fwi"
+        },
+        "after": [
+          "s1"
+        ],
+        "optional": true
+      },
+      {
+        "id": "s4",
+        "agent": "risk",
+        "task": "run rules R09-R12 and collect hazards for the site",
+        "params": {},
+        "after": [
+          "s2",
+          "s3"
+        ],
+        "optional": false
+      },
+      {
+        "id": "s5",
+        "agent": "kg",
+        "task": "live hazards and mitigating actions for the site",
+        "params": {
+          "cq": "CQL02"
+        },
+        "after": [
+          "s4"
+        ],
+        "optional": true
+      },
+      {
+        "id": "s6",
+        "agent": "kg",
+        "task": "live fire events near the site",
+        "params": {
+          "cq": "CQL04"
+        },
+        "after": [
+          "s4"
+        ],
+        "optional": true
+      }
+    ],
+    "synthesis": "situation, danger level, hazards, actions; cite all"
+  },
+  "steps": [
+    {
+      "id": "s1",
+      "agent": "resolve",
+      "ok": true,
+      "error": null,
+      "notes": [
+        "registered query location as a site in the live graph"
+      ],
+      "evidence": [
+        "LIVE1"
+      ]
+    },
+    {
+      "id": "s2",
+      "agent": "live_data",
+      "ok": true,
+      "error": null,
+      "notes": [
+        "IORS rounds: 10 km/2 d: 0 likely wildfire(s) of 0; 25 km/2 d: 0 likely wildfire(s) of 0; 50 km/2 d: 0 likely wildfire(s) of 0; 50 km/5 d: 3 likely wildfire(s) of 3"
+      ],
+      "evidence": [
+        "LIVE2"
+      ]
+    },
+    {
+      "id": "s3",
+      "agent": "live_data",
+      "ok": false,
+      "error": "ToolError: weather.fwi failed: HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=30)",
+      "notes": [],
+      "evidence": []
+    },
+    {
+      "id": "s4",
+      "agent": "risk",
+      "ok": true,
+      "error": null,
+      "notes": [
+        "rules derived {'R10_event': 3}; 0 relevant to this request"
+      ],
+      "evidence": [
+        "KG1"
+      ]
+    },
+    {
+      "id": "s5",
+      "agent": "kg",
+      "ok": true,
+      "error": null,
+      "notes": [
+        "IORS: CQL02 {'site': 'http://purl.org/ffonto/data/querysite/465a448fe2ba'}: only 0 row(s) with ['hz'] bound (need 1)"
+      ],
+      "evidence": [
+        "KG2"
+      ]
+    },
+    {
+      "id": "s6",
+      "agent": "kg",
+      "ok": true,
+      "error": null,
+      "notes": [
+        "IORS: CQL04 {'site': 'http://purl.org/ffonto/data/querysite/465a448fe2ba'}: only 0 row(s) with ['ev'] bound (need 1)"
+      ],
+      "evidence": [
+        "KG3"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "LIVE1",
+      "kind": "live",
+      "source": "Open-Meteo geocoding",
+      "summary": "'Kandy' resolved to Kandy, Central Province, Sri Lanka at 7.2906, 80.6336",
+      "query": null,
+      "safety_critical": false,
+      "step": "s1",
+      "data": [
+        {
+          "name": "Kandy",
+          "country": "Sri Lanka",
+          "admin1": "Central Province",
+          "lat": 7.2906,
+          "lon": 80.6336,
+          "country_code": "LK"
+        },
+        {
+          "name": "Kandi",
+          "country": "Uzbekistan",
+          "admin1": "Fergana",
+          "lat": 40.58208,
+          "lon": 72.0392,
+          "country_code": "UZ"
+        },
+        {
+          "name": "Qandi",
+          "country": "Uzbekistan",
+          "admin1": "Andijan Region",
+          "lat": 40.72638,
+          "lon": 72.54646,
+          "country_code": "UZ"
+        }
+      ]
+    },
+    {
+      "id": "LIVE2",
+      "kind": "live",
+      "source": "NASA FIRMS, fetched 2026-10-09T11:42Z",
+      "summary": "NASA FIRMS (VIIRS_NOAA20_NRT, VIIRS_NOAA21_NRT, VIIRS_SNPP_NRT, MODIS_NRT) within 50 km of Kandy, Central Province, Sri Lanka over the last 5 day(s): 3 thermal detection(s), 3 classified as likely vegetation fire. Categories: likely vegetation fire: 3.\nSearch widened step by step: 10 km/2 d: 0 likely wildfire(s) of 0; 25 km/2 d: 0 likely wildfire(s) of 0; 50 km/2 d: 0 likely wildfire(s) of 0; 50 km/5 d: 3 likely wildfire(s) of 3.\n- 2026-10-07 08:13 UTC at 7.641, 80.379, 48.0 km away; likely vegetation fire; FRP 4.41 MW; confidence n (VIIRS_SNPP_NRT). Reason: no static/volcanic/offshore match; confidence acceptable (could still be agricultural burning)\n- 2026-10-06 07:56 UTC at 7.110, 81.082, 53.4 km away; likely vegetation fire; FRP 2.9 MW; confidence n (VIIRS_NOAA21_NRT). Reason: no static/volcanic/offshore match; confidence acceptable (could still be agricultural burning)\n- 2026-10-07 08:13 UTC at 7.281, 81.067, 47.8 km away; likely vegetation fire; FRP 2.84 MW; confidence n (VIIRS_SNPP_NRT). Reason: no static/volcanic/offshore match; confidence acceptable (could still be agricultural burning)",
+      "query": null,
+      "safety_critical": false,
+      "step": "s2",
+      "data": {
+        "area": "80.1808,6.84144,81.0864,7.73976",
+        "days": 5,
+        "sources": [
+          "VIIRS_NOAA20_NRT",
+          "VIIRS_NOAA21_NRT",
+          "VIIRS_SNPP_NRT",
+          "MODIS_NRT"
+        ],
+        "fetched_at": "2026-10-09T11:42:46.982085+00:00",
+        "from_cache": false,
+        "endpoints": [
+          "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<MAP_KEY>/VIIRS_NOAA20_NRT/80.1808,6.84144,81.0864,7.73976/5",
+          "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<MAP_KEY>/VIIRS_NOAA21_NRT/80.1808,6.84144,81.0864,7.73976/5",
+          "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<MAP_KEY>/VIIRS_SNPP_NRT/80.1808,6.84144,81.0864,7.73976/5",
+          "https://firms.modaps.eosdis.nasa.gov/api/area/csv/<MAP_KEY>/MODIS_NRT/80.1808,6.84144,81.0864,7.73976/5"
+        ],
+        "total": 3,
+        "likely_wildfire": 3,
+        "by_category": {
+          "likely_vegetation_fire": 3
+        },
+        "hotspots": [
+          {
+            "source": "VIIRS_SNPP_NRT",
+            "latitude": 7.64124,
+            "longitude": 80.37897,
+            "acq_datetime": "2026-10-07T08:13:00+00:00",
+            "satellite": "N",
+            "instrument": "VIIRS",
+            "confidence_raw": "n",
+            "confidence_score": 0.6,
+            "frp": 4.41,
+            "brightness": 341.79,
+            "brightness_2": 294.25,
+            "daynight": "D",
+            "fire_type": null,
+            "version": "2.0NRT",
+            "category": "likely_vegetation_fire",
+            "wildfire_evidence": true,
+            "reasons": [
+              "no static/volcanic/offshore match; confidence acceptable (could still be agricultural burning)"
+            ],
+            "id": "e12e6b3c7bf93739"
+          },
+          {
+            "source": "VIIRS_NOAA21_NRT",
+            "latitude": 7.11035,
+            "longitude": 81.08237,
+            "acq_datetime": "2026-10-06T07:56:00+00:00",
+            "satellite": "N21",
+            "instrument": "VIIRS",
+            "confidence_raw": "n",
+            "confidence_score": 0.6,
+            "frp": 2.9,
+            "brightness": 333.39,
+            "brightness_2": 298.25,
+            "daynight": "D",
+            "fire_type": null,
+            "version": "2.0NRT",
+            "category": "likely_vegetation_fire",
+            "wildfire_evidence": true,
+            "reasons": [
+              "no static/volcanic/offshore match; confidence acceptable (could still be agricultural burning)"
+            ],
+            "id": "41729b5b862e8978"
+          },
+          {
+            "source": "VIIRS_SNPP_NRT",
+            "latitude": 7.28138,
+            "longitude": 81.06722,
+            "acq_datetime": "2026-10-07T08:13:00+00:00",
+            "satellite": "N",
+            "instrument": "VIIRS",
+            "confidence_raw": "n",
+            "confidence_score": 0.6,
+            "frp": 2.84,
+            "brightness": 332.45,
+            "brightness_2": 295.26,
+            "daynight": "D",
+            "fire_type": null,
+            "version": "2.0NRT",
+            "category": "likely_vegetation_fire",
+            "wildfire_evidence": true,
+            "reasons": [
+              "no static/volcanic/offshore match; confidence acceptable (could still be agricultural burning)"
+            ],
+            "id": "88b6bc8cf378ed64"
+          }
+        ],
+        "truncated": 0,
+        "stored_triples": 77,
+        "warnings": [],
+        "_radius_km": 50.0,
+        "_days": 5
+      }
+    },
+    {
+      "id": "KG1",
+      "kind": "kg",
+      "source": "rules R09-R12",
+      "summary": "Live rules R09-R12 derived no hazard for Kandy, Central Province, Sri Lanka (R09 radius 10.0 km).",
+      "query": null,
+      "safety_critical": false,
+      "step": "s4",
+      "data": {
+        "derived": {
+          "R10_event": 3
+        },
+        "triples": 27,
+        "hazards": [],
+        "warnings": [],
+        "graph": "http://purl.org/ffonto/graph/inferred-live",
+        "ran_at": "2026-10-09T11:43:05.237875+00:00"
+      }
+    },
+    {
+      "id": "KG2",
+      "kind": "kg",
+      "source": "CQL02",
+      "summary": "CQL02 (Which live hazards were derived for a site, by which rule, from which evidence, and what actions mitigate them?) for Kandy, Central Province, Sri Lanka:\nno evidence in the knowledge graph",
+      "query": "PREFIX ffo: <http://purl.org/ffonto#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nSELECT ?hz ?hazard ?rule ?explanation ?raised (GROUP_CONCAT(DISTINCT ?ev; separator=\" \") AS ?evidence)\n       (GROUP_CONCAT(DISTINCT ?actionLabel; separator=\" | \") AS ?actions)\nWHERE {\n  ?hz a ffo:LiveHazard ; ffo:affectsSite <http://purl.org/ffonto/data/querysite/465a448fe2ba> ; ffo:hazardType ?ht ; ffo:derivedByRule ?rule ;\n      ffo:explanation ?explanation .\n  ?ht skos:prefLabel ?hazard .\n  OPTIONAL { ?hz ffo:supportedBy ?ev }\n  OPTIONAL { ?hz ffo:raisedDangerClass/skos:prefLabel ?raised }\n  OPTIONAL { ?ht ffo:mitigatedBy/skos:prefLabel ?actionLabel }\n}\nGROUP BY ?hz ?hazard ?rule ?explanation ?raised\nORDER BY ?rule\nLIMIT 500",
+      "safety_critical": false,
+      "step": "s5",
+      "data": []
+    },
+    {
+      "id": "KG3",
+      "kind": "kg",
+      "source": "CQL04",
+      "summary": "CQL04 (Which live fire events (hotspot clusters) are near a site, how large are they and are they growing?) for Kandy, Central Province, Sri Lanka:\nno evidence in the knowledge graph",
+      "query": "PREFIX ffo: <http://purl.org/ffonto#>\nSELECT ?ev ?firstSeen ?lastSeen ?count ?totalFrp ?growth\nWHERE {\n  ?ev a ffo:LiveFireEvent ; ffo:nearSite <http://purl.org/ffonto/data/querysite/465a448fe2ba> ; ffo:firstSeen ?firstSeen ; ffo:lastSeen ?lastSeen ;\n      ffo:hotspotCount ?count ; ffo:totalFrpMW ?totalFrp .\n  OPTIONAL { ?hz ffo:affectsEvent ?ev ; ffo:frpGrowthRatio ?growth }\n}\nORDER BY DESC(?lastSeen)\nLIMIT 500",
+      "safety_critical": false,
+      "step": "s6",
+      "data": []
+    }
+  ],
+  "tool_calls": [
+    {
+      "tool": "weather.geocode",
+      "args": {
+        "name": "Kandy"
+      },
+      "latency_s": 4.496143733034842,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "kg.run_cq",
+      "args": {
+        "cq_id": "CQL09",
+        "params": {}
+      },
+      "latency_s": 0.10236196091864258,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "kg.register_site",
+      "args": {
+        "label": "Kandy, Central Province, Sri Lanka",
+        "lat": 7.2906,
+        "lon": 80.6336
+      },
+      "latency_s": 0.0004438019823282957,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "firms.get_hotspots",
+      "args": {
+        "lat": 7.2906,
+        "lon": 80.6336,
+        "radius_km": 10.0,
+        "days": 2
+      },
+      "latency_s": 2.320881932042539,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "firms.get_hotspots",
+      "args": {
+        "lat": 7.2906,
+        "lon": 80.6336,
+        "radius_km": 25.0,
+        "days": 2
+      },
+      "latency_s": 6.5106417869683355,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "firms.get_hotspots",
+      "args": {
+        "lat": 7.2906,
+        "lon": 80.6336,
+        "radius_km": 50.0,
+        "days": 2
+      },
+      "latency_s": 1.4581138329813257,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "firms.get_hotspots",
+      "args": {
+        "lat": 7.2906,
+        "lon": 80.6336,
+        "radius_km": 50.0,
+        "days": 5
+      },
+      "latency_s": 4.367251234012656,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "weather.fwi",
+      "args": {
+        "lat": 7.2906,
+        "lon": 80.6336,
+        "site": "http://purl.org/ffonto/data/querysite/465a448fe2ba"
+      },
+      "latency_s": 30.20105076301843,
+      "ok": false,
+      "error": "HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=30)"
+    },
+    {
+      "tool": "kg.run_rules",
+      "args": {},
+      "latency_s": 0.025799697963520885,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "kg.run_cq",
+      "args": {
+        "cq_id": "CQL02",
+        "params": {
+          "site": "http://purl.org/ffonto/data/querysite/465a448fe2ba"
+        }
+      },
+      "latency_s": 0.04810612997971475,
+      "ok": true,
+      "error": null
+    },
+    {
+      "tool": "kg.run_cq",
+      "args": {
+        "cq_id": "CQL04",
+        "params": {
+          "site": "http://purl.org/ffonto/data/querysite/465a448fe2ba"
+        }
+      },
+      "latency_s": 0.048094516969285905,
+      "ok": true,
+      "error": null
+    }
+  ],
+  "llm_calls": [
+    {
+      "slot": "planner",
+      "model": "qwen2.5:14b",
+      "latency_s": 7.291321713011712,
+      "prompt_tokens": 887,
+      "completion_tokens": 51,
+      "ok": true,
+      "error": null
+    },
+    {
+      "slot": "synthesizer",
+      "model": "qwen2.5:14b",
+      "latency_s": 4.885548388934694,
+      "prompt_tokens": 992,
+      "completion_tokens": 134,
+      "ok": true,
+      "error": null
+    }
+  ],
+  "issues": [],
+  "timings": {
+    "plan": 7.292,
+    "execute": 34.874,
+    "synthesize": 4.886,
+    "verify": 0.0,
+    "total": 47.056
+  },
+  "context": {
+    "label": "Kandy, Central Province, Sri Lanka",
+    "lat": 7.2906,
+    "lon": 80.6336,
+    "site": "http://purl.org/ffonto/data/querysite/465a448fe2ba",
+    "hotspot_radius_km": 50.0,
+    "hazard_types": []
+  }
+}

@@ -1,0 +1,44 @@
+# Which model fills which slot. Swap models here; nothing else changes.
+# provider -> base_url is looked up in `providers`.
+
+providers:
+  ollama: {base_url: "${OLLAMA_BASE_URL:-http://localhost:11434/v1}", api_key: "ollama"}
+  vllm:   {base_url: "${VLLM_BASE_URL:-http://localhost:8000/v1}",   api_key: "EMPTY"}
+
+defaults:
+  temperature: 0
+  seed: 42
+  max_tokens: 1536
+  timeout_s: 180
+
+slots:
+  planner:       {provider: ollama, model: "qwen2.5:14b", json: true}
+  sparql:        {provider: ollama, model: "qwen2.5:14b"}
+  synthesizer:   {provider: ollama, model: "qwen2.5:14b", json: true}
+  verifier:      {provider: ollama, model: "qwen2.5:7b",  json: true}
+  rag_grader:    {provider: ollama, model: "qwen2.5:7b",  json: true}
+  scene_graph:   {provider: ollama, model: "qwen2.5vl:7b", json: true, vision: true}
+  figure_reader: {provider: ollama, model: "qwen2.5vl:7b", json: true, vision: true}
+
+# Candidate pools for the model-comparison harness (eval/run_sweep.py).
+# Check the exact tags in your Ollama library / Hugging Face before running.
+candidates:
+  text:
+    - {provider: ollama, model: "llama3.1:8b"}
+    - {provider: ollama, model: "qwen3:8b"}
+    - {provider: ollama, model: "qwen2.5:14b"}
+    - {provider: ollama, model: "qwen3:14b"}
+    - {provider: ollama, model: "deepseek-r1:14b"}
+    - {provider: ollama, model: "gemma4:12b"}
+    - {provider: ollama, model: "phi4:14b"}
+    - {provider: ollama, model: "mistral-small:24b"}
+    - {provider: ollama, model: "gpt-oss:20b"}
+  vision:
+    - {provider: ollama, model: "llava:7b"}
+    - {provider: ollama, model: "llava:13b"}
+    - {provider: ollama, model: "qwen2.5vl:7b"}
+    - {provider: ollama, model: "qwen3-vl:8b"}
+    - {provider: ollama, model: "gemma3:12b"}
+    - {provider: ollama, model: "llama3.2-vision:11b"}
+    - {provider: vllm,   model: "deepseek-ai/deepseek-vl2-small"}
+    - {provider: vllm,   model: "OpenGVLab/InternVL3-8B"}

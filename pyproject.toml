@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wildfire-mas"
+version = "0.1.0"
+description = "Ontology-grounded multi-agent system for wildfire screening (FFOnto + GraphDB + NASA FIRMS + MCP + LangGraph)"
+requires-python = ">=3.10"
+dependencies = [
+  "requests>=2.31",
+  "pydantic>=2.6",
+  "pyyaml>=6.0",
+  "pandas>=2.0",
+  "python-dotenv>=1.0",
+  "langgraph>=0.2",
+  "mcp>=2.0",
+  "rdflib>=7.0",
+  "numpy>=1.24",      # ffonto-v2 qa package (bridge)
+  "openpyxl>=3.1",    # ffonto-v2 labelled questions (golden-import)
+]
+
+[project.optional-dependencies]
+validate = ["pyshacl>=0.25"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+tracing = ["langfuse>=2.0"]
+
+[project.scripts]
+wfmas = "wildfire_mas.cli:main"
+wfmas-eval = "wildfire_mas.evaluation.harness:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

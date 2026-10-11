@@ -1,0 +1,134 @@
+# Wildfire MAS settings. Values like ${VAR} are read from the environment / .env.
+
+ontology:
+  # FFOnto namespaces (ffonto:, ffontov:, ffd: in the ffonto-v2 project)
+  base: "http://purl.org/ffonto#"          # ffonto:  core schema
+  vocab: "http://purl.org/ffonto/vocab#"   # ffontov:  SKOS vocabulary
+  data: "http://purl.org/ffonto/data/"     # instance IRIs
+  graphs:                                   # named graphs (existing + new)
+    ontology: "http://purl.org/ffonto/graph/ontology"
+    vocab: "http://purl.org/ffonto/graph/vocab"
+    image: "http://purl.org/ffonto/graph/image"
+    audio: "http://purl.org/ffonto/graph/audio"
+    weather: "http://purl.org/ffonto/graph/weather"
+    scene: "http://purl.org/ffonto/graph/scene"
+    inferred: "http://purl.org/ffonto/graph/inferred"
+    live: "http://purl.org/ffonto/graph/live"                  # NEW: FIRMS + live weather
+    inferred_live: "http://purl.org/ffonto/graph/inferred-live" # NEW: R09-R12 output
+
+ffonto_v2:
+  # Path to the ffonto-v2 project. Its qa package is the GraphDB agent's backend:
+  # CQ01-CQ26 (with record/event/site/date narrowing), text-to-SPARQL "plus", multimodal RAG,
+  # and the labelled ForestFire-VQA example index. Empty = use the built-in fallbacks only.
+  path: "${FFONTO_V2_PATH}"
+  use_rag: true          # use its bge-m3 document index (qa/index) for the RAG agent
+  use_examples: true     # use its labelled-question index for the planner's few-shot examples
+
+graphdb:
+  backend: graphdb            # graphdb | memory (memory = rdflib, for demos/tests)
+  url: "${GRAPHDB_URL:-http://localhost:7200}"
+  repository: "${GRAPHDB_REPO:-ffonto}"
+  user: ${GRAPHDB_USER}
+  password: ${GRAPHDB_PASSWORD}
+  timeout_s: 30
+  geosparql_enabled: false    # true once the GraphDB GeoSPARQL plugin is enabled
+
+sparql_guard:
+  max_rows: 500
+  allow_service: false
+  extra_allowed_prefixes:     # namespaces always allowed besides ffo/ffv
+    - "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    - "http://www.w3.org/2000/01/rdf-schema#"
+    - "http://www.w3.org/2002/07/owl#"
+    - "http://www.w3.org/2001/XMLSchema#"
+    - "http://www.w3.org/2004/02/skos/core#"
+    - "http://www.opengis.net/ont/geosparql#"
+    - "http://www.opengis.net/def/function/geosparql/"
+    - "http://www.opengis.net/def/uom/OGC/1.0/"
+    - "http://www.w3.org/ns/prov#"
+    - "http://www.w3.org/ns/sosa/"          # FFOnto observations (sosa:observedProperty ...)
+    - "http://www.w3.org/ns/ssn/"
+    - "http://purl.org/dc/terms/"           # FFOnto metadata (dcterms:license ...)
+
+region:
+  # Default study area: Sri Lanka. Any query can override with a bbox, a place name,
+  # a country code, or "world".
+  default_name: "Sri Lanka"
+  default_bbox: [79.5, 5.85, 82.0, 9.9]   # west, south, east, north
+  default_country: "LKA"
+
+firms:
+  map_key: ${FIRMS_MAP_KEY}
+  base_url: "https://firms.modaps.eosdis.nasa.gov"
+  default_sources: [VIIRS_NOAA20_NRT, VIIRS_NOAA21_NRT, VIIRS_SNPP_NRT, MODIS_NRT]
+  max_day_range: 5
+  cache_dir: ".cache/firms"
+  cache_ttl_s: 900            # FIRMS limit: 5000 transactions / 10 min per key
+  replay_dir: null            # set to a folder to replay frozen snapshots (evaluation)
+  record_dir: null            # set to a folder to save every response as a snapshot
+
+hotspot_filter:
+  # FIRMS reports thermal anomalies, not only wildfires. Every hotspot is kept but
+  # labelled; agents only treat "likely_vegetation_fire" as wildfire evidence.
+  min_modis_confidence: 30            # 0-100
+  viirs_low_confidence_is_weak: true  # VIIRS confidence l/n/h
+  persistence_window_days: 30
+  persistence_min_days: 8             # seen on >= N distinct days in window -> static source
+  persistence_cell_deg: 0.004         # ~400 m grid used for persistence counting
+  static_sources_file: "data/static_sources.csv"   # optional: known volcanoes, flares, plants
+  static_match_km: 1.0
+  land_mask_file: null                # optional GeoJSON of land polygons (offshore check)
+
+weather:
+  provider: open-meteo
+  base_url: "https://api.open-meteo.com/v1/forecast"
+  geocode_url: "https://geocoding-api.open-meteo.com/v1/search"
+  fwi_spinup_days: 30          # days of history used to spin up FFMC/DMC/DC
+  cache_ttl_s: 1800
+
+danger:
+  # EFFIS-style FWI danger classes (stored as data, like your existing danger rules)
+  fwi_classes:
+    - {name: VeryLow,  max: 5.2}
+    - {name: Low,      max: 11.2}
+    - {name: Moderate, max: 21.3}
+    - {name: High,     max: 38.0}
+    - {name: VeryHigh, max: 50.0}
+    - {name: Extreme,  max: 1.0e9}
+
+rules:
+  # Python engine (portable, no GeoSPARQL needed). rules/R09_geosparql_reference.rq shows
+  # the same R09 logic in GeoSPARQL for repositories with the plugin enabled.
+  R09_near_km: 10.0            # hotspot within X km of a Site -> NearbyActiveFire
+  R10_cluster_km: 2.0          # hotspots within X km and T h -> same live FireEvent
+  R10_cluster_hours: 24
+  R10_frp_growth_ratio: 1.5    # FRP sum of latest pass / previous pass -> SpreadingFire
+  R11_min_danger: High         # danger class at/above which a nearby fire raises the level
+  R12_match_km: 1.0
+  R12_match_hours: 3
+
+orchestrator:
+  max_parallel_steps: 4
+  step_timeout_s: 90
+  verifier_rewrites: 1
+  planner_mode: template       # template (deterministic plans) | llm (LLM-written plans, validated)
+
+iors:                          # Iterative Optimization of Retrieval (KG + live + RAG)
+  max_rounds: 3
+  radius_ladder_km: [10, 25, 50]
+  day_ladder: [1, 2, 5]
+  min_rows: 1
+
+rag:
+  backend: bm25                # bm25 (built-in, JSONL chunks) | custom (your bge-m3 index)
+  chunks_file: "data/rag_chunks.jsonl"
+  custom_class: null           # "yourpkg.module:ClassName" implementing search(query, k)
+  top_k: 6
+  grade_min_relevant: 2        # CRAG: re-query if fewer relevant passages than this
+
+paths:
+  cq_dir: "cq"
+  ontology_dir: "ontology"
+  rules_dir: "rules"
+  fewshot_file: "eval/datasets/intent_fewshot.jsonl"
+  runs_dir: "runs"

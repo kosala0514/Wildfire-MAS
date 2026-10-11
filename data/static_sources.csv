@@ -1,0 +1,6 @@
+# Known non-wildfire heat sources near your study areas (volcanoes, gas flares,
+# refineries, steel plants, thermal power stations, cement kilns, landfills).
+# kind: volcano | flare | industrial | power | landfill | other
+# Add verified coordinates (decimal degrees, WGS84). The persistence check in
+# classify.py catches most unlisted static sources automatically.
+name,lat,lon,kind

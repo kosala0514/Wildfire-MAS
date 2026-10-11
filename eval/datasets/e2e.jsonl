@@ -1,0 +1,3 @@
+{"question": "Are there any fires near Kandy right now?", "place": "Kandy", "intent": "situational_awareness"}
+{"question": "What hazards are present and what should we do?", "record": "http://purl.org/ffonto/data/image/img_081", "intent": "hazard_advice", "hazards": ["NearbyActiveFire"]}
+{"question": "How does FWI relate to fire spread?", "intent": "explanation"}

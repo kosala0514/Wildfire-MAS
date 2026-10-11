@@ -1,0 +1,21 @@
+# Scene-graph vocabulary given to the VLM (export the relevant SKOS concepts from FFOnto here)
+Firefighter
+Helmet
+Gloves
+Boots
+FireResistantClothing
+Respirator
+FireTruck
+Hose
+PropaneTank
+House
+PowerLine
+Smoke
+Flame
+CrownFire
+SurfaceFire
+Tree
+Grass
+Shrub
+Road
+Vehicle

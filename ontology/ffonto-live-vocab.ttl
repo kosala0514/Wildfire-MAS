@@ -1,0 +1,85 @@
+@prefix ffonto:  <http://purl.org/ffonto#> .
+@prefix ffontov:  <http://purl.org/ffonto/vocab#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+# Vocabulary additions for live data (load into the vocab graph next to ffonto-vocab.ttl).
+# Names are chosen not to collide with ffonto-vocab.ttl: the FWI danger classes are
+# FWIDanger*, not High/Low/Extreme (those are FFOnto severity values), and the R11 hazard is
+# ElevatedDangerNearActiveFire, not ffontov:ElevatedFireDanger (an FFOnto danger condition,
+# referenced below as related). Existing FFOnto actions are reused (ffontov:RequestAerialSupport).
+
+# --- hotspot detection categories
+ffontov:HotspotCategoryScheme a skos:ConceptScheme ;
+    rdfs:label "Hotspot categories"@en ; skos:prefLabel "Hotspot categories"@en .
+ffontov:LikelyVegetationFire a skos:Concept ; skos:inScheme ffontov:HotspotCategoryScheme ;
+    rdfs:label "Likely vegetation fire"@en ; skos:prefLabel "Likely vegetation fire"@en ;
+    skos:definition "Thermal anomaly with no volcanic, static, offshore or persistence match and acceptable confidence. May still be agricultural burning."@en .
+ffontov:LowConfidenceDetection a skos:Concept ; skos:inScheme ffontov:HotspotCategoryScheme ;
+    rdfs:label "Low-confidence detection"@en ; skos:prefLabel "Low-confidence detection"@en ;
+    skos:definition "Detection with VIIRS confidence low or MODIS confidence below the configured minimum."@en .
+ffontov:PersistentStaticHeatSource a skos:Concept ; skos:inScheme ffontov:HotspotCategoryScheme ;
+    rdfs:label "Persistent static heat source"@en ; skos:prefLabel "Persistent static heat source"@en ;
+    skos:definition "Location detected on many distinct days; typical of gas flares, industry or power plants."@en .
+ffontov:StaticLandHeatSource a skos:Concept ; skos:inScheme ffontov:HotspotCategoryScheme ;
+    rdfs:label "Static land heat source"@en ; skos:prefLabel "Static land heat source"@en ;
+    skos:definition "FIRMS type 2 or a known industrial/static source."@en .
+ffontov:VolcanicHeatSource a skos:Concept ; skos:inScheme ffontov:HotspotCategoryScheme ;
+    rdfs:label "Volcanic heat source"@en ; skos:prefLabel "Volcanic heat source"@en ;
+    skos:definition "FIRMS type 1 or a known volcano."@en .
+ffontov:OffshoreHeatSource a skos:Concept ; skos:inScheme ffontov:HotspotCategoryScheme ;
+    rdfs:label "Offshore heat source"@en ; skos:prefLabel "Offshore heat source"@en ;
+    skos:definition "FIRMS type 3 or outside the land mask."@en .
+
+# --- FWI danger classes (EFFIS-style limits in config/settings.yaml)
+ffontov:FWIDangerScheme a skos:ConceptScheme ;
+    rdfs:label "FWI danger classes"@en ; skos:prefLabel "FWI danger classes"@en .
+ffontov:FWIDangerVeryLow a skos:Concept ; skos:inScheme ffontov:FWIDangerScheme ; skos:notation "1" ;
+    rdfs:label "Very low fire danger"@en ; skos:prefLabel "Very low fire danger"@en .
+ffontov:FWIDangerLow a skos:Concept ; skos:inScheme ffontov:FWIDangerScheme ; skos:notation "2" ;
+    rdfs:label "Low fire danger"@en ; skos:prefLabel "Low fire danger"@en .
+ffontov:FWIDangerModerate a skos:Concept ; skos:inScheme ffontov:FWIDangerScheme ; skos:notation "3" ;
+    rdfs:label "Moderate fire danger"@en ; skos:prefLabel "Moderate fire danger"@en .
+ffontov:FWIDangerHigh a skos:Concept ; skos:inScheme ffontov:FWIDangerScheme ; skos:notation "4" ;
+    rdfs:label "High fire danger"@en ; skos:prefLabel "High fire danger"@en .
+ffontov:FWIDangerVeryHigh a skos:Concept ; skos:inScheme ffontov:FWIDangerScheme ; skos:notation "5" ;
+    rdfs:label "Very high fire danger"@en ; skos:prefLabel "Very high fire danger"@en .
+ffontov:FWIDangerExtreme a skos:Concept ; skos:inScheme ffontov:FWIDangerScheme ; skos:notation "6" ;
+    rdfs:label "Extreme fire danger"@en ; skos:prefLabel "Extreme fire danger"@en .
+
+# --- live hazard types (also in FFOnto's HazardScheme, so CQ24/CQ25 treat them like any hazard)
+ffontov:LiveHazardScheme a skos:ConceptScheme ;
+    rdfs:label "Live hazards"@en ; skos:prefLabel "Live hazards"@en .
+ffontov:NearbyActiveFire a skos:Concept ; skos:inScheme ffontov:LiveHazardScheme , ffontov:HazardScheme ;
+    rdfs:label "Nearby active fire"@en ; skos:prefLabel "Nearby active fire"@en ;
+    skos:definition "A likely vegetation-fire hotspot within the configured distance of a site (R09)."@en ;
+    ffonto:mitigatedBy ffontov:MonitorFireFront , ffontov:PrepareEvacuationRoutes , ffontov:AlertCrews .
+ffontov:SpreadingFire a skos:Concept ; skos:inScheme ffontov:LiveHazardScheme , ffontov:HazardScheme ;
+    rdfs:label "Spreading fire"@en ; skos:prefLabel "Spreading fire"@en ;
+    skos:definition "A live fire event whose fire radiative power grows between satellite passes (R10)."@en ;
+    ffonto:mitigatedBy ffontov:RequestAerialSupport , ffontov:PrepareEvacuationRoutes , ffontov:EstablishSafetyZone .
+ffontov:ElevatedDangerNearActiveFire a skos:Concept ; skos:inScheme ffontov:LiveHazardScheme , ffontov:HazardScheme ;
+    rdfs:label "Elevated danger near an active fire"@en ; skos:prefLabel "Elevated danger near an active fire"@en ;
+    skos:definition "High weather-driven fire danger (FWI) at a site that also has a nearby active fire (R11)."@en ;
+    skos:related ffontov:ElevatedFireDanger ;
+    ffonto:mitigatedBy ffontov:PrepositionResources , ffontov:RestrictIgnitionSources , ffontov:AlertCrews .
+ffontov:SatelliteSceneConflict a skos:Concept ; skos:inScheme ffontov:LiveHazardScheme , ffontov:HazardScheme ;
+    rdfs:label "Satellite / on-scene conflict"@en ; skos:prefLabel "Satellite / on-scene conflict"@en ;
+    skos:definition "A satellite hotspot near an image whose fire score is below its threshold (R12)."@en ;
+    ffonto:mitigatedBy ffontov:VerifyOnScene .
+
+# --- actions not in FFOnto (ffontov:RequestAerialSupport is FFOnto's own)
+ffontov:MonitorFireFront a skos:Concept ; skos:inScheme ffontov:ActionScheme ;
+    rdfs:label "Monitor the fire front"@en ; skos:prefLabel "Monitor the fire front"@en .
+ffontov:PrepareEvacuationRoutes a skos:Concept ; skos:inScheme ffontov:ActionScheme ;
+    rdfs:label "Prepare evacuation routes"@en ; skos:prefLabel "Prepare evacuation routes"@en .
+ffontov:AlertCrews a skos:Concept ; skos:inScheme ffontov:ActionScheme ;
+    rdfs:label "Alert crews in the area"@en ; skos:prefLabel "Alert crews in the area"@en .
+ffontov:EstablishSafetyZone a skos:Concept ; skos:inScheme ffontov:ActionScheme ;
+    rdfs:label "Establish a safety zone"@en ; skos:prefLabel "Establish a safety zone"@en .
+ffontov:PrepositionResources a skos:Concept ; skos:inScheme ffontov:ActionScheme ;
+    rdfs:label "Pre-position resources"@en ; skos:prefLabel "Pre-position resources"@en .
+ffontov:RestrictIgnitionSources a skos:Concept ; skos:inScheme ffontov:ActionScheme ;
+    rdfs:label "Restrict ignition sources"@en ; skos:prefLabel "Restrict ignition sources"@en .
+ffontov:VerifyOnScene a skos:Concept ; skos:inScheme ffontov:ActionScheme ;
+    rdfs:label "Verify on scene (drone or ground check)"@en ; skos:prefLabel "Verify on scene (drone or ground check)"@en .

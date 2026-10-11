@@ -1,0 +1,147 @@
+@prefix ffonto:  <http://purl.org/ffonto#> .
+@prefix ffv:  <http://purl.org/ffonto/vocab#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+# -----------------------------------------------------------------------------
+# FFOnto live-data module. EXTENDS ffonto-core.ttl (load into the ontology graph next to it;
+# for Protégé/ROBOT add  <uri name="http://purl.org/ffonto/live" uri="ffonto-live.ttl"/>
+# to catalog-v001.xml and import it from ffonto.ttl).
+#
+# Reuses FFOnto instead of redefining it:
+#   computed FWI days + current weather -> ffonto:WeatherRecord (atSite, observationDate,
+#                                          airTemperatureC, relativeHumidityPct, windSpeedKmh,
+#                                          rainMm, ffmc, dmc, dc, isi, bui, fwi, previousRecord)
+#                                          => CQ08 and CQ09 also return live weather
+#   live hazards                        -> ffonto:Hazard (hasHazardType, inEvent,
+#                                          prov:wasDerivedFrom, rdfs:comment)
+#                                          => CQ24 and CQ25 also list satellite hazards
+#   hotspot classification              -> ffonto:ModelObservation (ffonto:confidence, xsd:double)
+#   live fire events                    -> ffonto:FireEvent (ffonto:eventCode)
+# Only terms FFOnto does not have are declared here.
+# -----------------------------------------------------------------------------
+
+<http://purl.org/ffonto/live> a owl:Ontology ;
+    rdfs:label "FFOnto live-data module"@en ;
+    dct:title "FFOnto live-data module"@en ;
+    rdfs:comment "Satellite hotspots (NASA FIRMS), live weather and computed FWI, and hazards derived by rules R09-R12. Extends the FFOnto core ontology."@en ;
+    owl:imports <http://purl.org/ffonto> ;
+    owl:versionInfo "0.2.0" .
+
+# ---- WORLD layer -------------------------------------------------------------
+ffonto:LiveFireEvent a owl:Class ;
+    rdfs:subClassOf ffonto:FireEvent ;
+    rdfs:label "Live fire event"@en ;
+    rdfs:comment "A fire event inferred by clustering satellite hotspots in space and time (rule R10)."@en .
+
+ffonto:LiveHazard a owl:Class ;
+    rdfs:subClassOf ffonto:Hazard ;
+    rdfs:label "Live hazard"@en ;
+    rdfs:comment "A hazard derived by a live-data rule (R09-R12) from satellite, weather and on-scene evidence; typed with ffonto:hasHazardType like every FFOnto hazard."@en .
+
+# ---- DATA layer --------------------------------------------------------------
+ffonto:SatelliteHotspot a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Satellite hotspot"@en ;
+    rdfs:comment "A thermal anomaly detected by a satellite sensor (MODIS, VIIRS, Landsat) and reported by NASA FIRMS. Not necessarily a wildfire."@en .
+
+ffonto:LiveWeatherRecord a owl:Class ;
+    rdfs:subClassOf ffonto:WeatherRecord ;
+    rdfs:label "Live weather record"@en ;
+    rdfs:comment "A weather / FWI record fetched or computed at question time (Open-Meteo weather; FWI computed with the Canadian FWI System equations)."@en .
+
+# ---- CLAIMS layer ------------------------------------------------------------
+ffonto:HotspotClassification a owl:Class ;
+    rdfs:subClassOf ffonto:ModelObservation ;
+    rdfs:label "Hotspot classification"@en ;
+    rdfs:comment "Whether a satellite hotspot is evidence of a vegetation fire, with the FIRMS confidence (ffonto:confidence), the category and the reasons."@en .
+
+# ---- object properties -------------------------------------------------------
+ffonto:aboutHotspot a owl:ObjectProperty ;
+    rdfs:label "about hotspot"@en ; rdfs:domain ffonto:HotspotClassification ; rdfs:range ffonto:SatelliteHotspot ;
+    rdfs:comment "Links a hotspot classification to the hotspot it classifies."@en .
+ffonto:detectionCategory a owl:ObjectProperty ;
+    rdfs:label "detection category"@en ; rdfs:domain ffonto:HotspotClassification ; rdfs:range skos:Concept ;
+    rdfs:comment "Category of a hotspot (likely vegetation fire, static source, volcanic, offshore, low confidence)."@en .
+ffonto:dangerClass a owl:ObjectProperty ;
+    rdfs:label "danger class"@en ; rdfs:domain ffonto:WeatherRecord ; rdfs:range skos:Concept ;
+    rdfs:comment "Fire danger class of a weather record's FWI value (ffontov:FWIDangerScheme)."@en .
+ffonto:hasHotspot a owl:ObjectProperty ;
+    rdfs:label "has hotspot"@en ; rdfs:domain ffonto:LiveFireEvent ; rdfs:range ffonto:SatelliteHotspot ;
+    rdfs:comment "A hotspot that belongs to a live fire event."@en .
+ffonto:nearSite a owl:ObjectProperty ;
+    rdfs:label "near site"@en ; rdfs:domain ffonto:LiveFireEvent ; rdfs:range ffonto:Site ;
+    rdfs:comment "A site within the R09 distance of a live fire event's centre."@en .
+ffonto:affectsSite a owl:ObjectProperty ;
+    rdfs:label "affects site"@en ; rdfs:domain ffonto:LiveHazard ; rdfs:range ffonto:Site ;
+    rdfs:comment "The site a live hazard applies to."@en .
+ffonto:raisedDangerClass a owl:ObjectProperty ;
+    rdfs:label "raised danger class"@en ; rdfs:domain ffonto:LiveHazard ; rdfs:range skos:Concept ;
+    rdfs:comment "Danger class after rule R11 raised it by one level."@en .
+
+# ---- data properties ---------------------------------------------------------
+ffonto:acquiredAt a owl:DatatypeProperty ; rdfs:label "acquired at"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:dateTime ;
+    rdfs:comment "UTC time of the satellite overpass that detected the hotspot."@en .
+ffonto:latitude a owl:DatatypeProperty ; rdfs:label "latitude"@en ; rdfs:range xsd:decimal ;
+    rdfs:comment "WGS84 latitude in decimal degrees (hotspots, query sites, live events)."@en .
+ffonto:longitude a owl:DatatypeProperty ; rdfs:label "longitude"@en ; rdfs:range xsd:decimal ;
+    rdfs:comment "WGS84 longitude in decimal degrees (hotspots, query sites, live events)."@en .
+ffonto:fromProduct a owl:DatatypeProperty ; rdfs:label "from product"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:string ;
+    rdfs:comment "FIRMS product (e.g. VIIRS_NOAA20_NRT)."@en .
+ffonto:satellite a owl:DatatypeProperty ; rdfs:label "satellite"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:string ;
+    rdfs:comment "Satellite code reported by FIRMS."@en .
+ffonto:instrument a owl:DatatypeProperty ; rdfs:label "instrument"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:string ;
+    rdfs:comment "Sensor (MODIS, VIIRS)."@en .
+ffonto:frpMW a owl:DatatypeProperty ; rdfs:label "fire radiative power (MW)"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:double ;
+    rdfs:comment "Fire radiative power in megawatts."@en .
+ffonto:brightnessK a owl:DatatypeProperty ; rdfs:label "brightness (K)"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:double ;
+    rdfs:comment "Brightness temperature (MODIS brightness / VIIRS I-4) in kelvin."@en .
+ffonto:brightness2K a owl:DatatypeProperty ; rdfs:label "brightness channel 2 (K)"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:double ;
+    rdfs:comment "Second brightness temperature (MODIS T31 / VIIRS I-5) in kelvin."@en .
+ffonto:dayNight a owl:DatatypeProperty ; rdfs:label "day/night"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:string ;
+    rdfs:comment "D or N."@en .
+ffonto:firmsConfidence a owl:DatatypeProperty ; rdfs:label "FIRMS confidence"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:string ;
+    rdfs:comment "Confidence as reported by FIRMS (VIIRS l/n/h, MODIS 0-100)."@en .
+ffonto:firmsType a owl:DatatypeProperty ; rdfs:label "FIRMS type"@en ; rdfs:domain ffonto:SatelliteHotspot ; rdfs:range xsd:integer ;
+    rdfs:comment "FIRMS standard-processing type: 0 vegetation fire, 1 volcano, 2 static land source, 3 offshore."@en .
+ffonto:isWildfireEvidence a owl:DatatypeProperty ; rdfs:label "is wildfire evidence"@en ; rdfs:domain ffonto:HotspotClassification ; rdfs:range xsd:boolean ;
+    rdfs:comment "True only for the category likely vegetation fire."@en .
+ffonto:classificationReason a owl:DatatypeProperty ; rdfs:label "classification reason"@en ; rdfs:domain ffonto:HotspotClassification ; rdfs:range xsd:string ;
+    rdfs:comment "Why the hotspot received its category."@en .
+ffonto:sourceEndpoint a owl:DatatypeProperty ; rdfs:label "source endpoint"@en ; rdfs:range xsd:string ;
+    rdfs:comment "Endpoint of a fetch activity (API keys redacted)."@en .
+ffonto:sourceKind a owl:DatatypeProperty ; rdfs:label "source kind"@en ; rdfs:range xsd:string ;
+    rdfs:comment "Kind of live source (NASA FIRMS, Open-Meteo, FWI computation)."@en .
+ffonto:sourceProduct a owl:DatatypeProperty ; rdfs:label "source product"@en ; rdfs:range xsd:string ;
+    rdfs:comment "Products requested in a fetch activity."@en .
+ffonto:observedAtLocal a owl:DatatypeProperty ; rdfs:label "observed at (local time)"@en ; rdfs:domain ffonto:LiveWeatherRecord ; rdfs:range xsd:string ;
+    rdfs:comment "Local time of a current-weather reading."@en .
+ffonto:firstSeen a owl:DatatypeProperty ; rdfs:label "first seen"@en ; rdfs:domain ffonto:LiveFireEvent ; rdfs:range xsd:dateTime ;
+    rdfs:comment "Earliest hotspot time of a live fire event."@en .
+ffonto:lastSeen a owl:DatatypeProperty ; rdfs:label "last seen"@en ; rdfs:domain ffonto:LiveFireEvent ; rdfs:range xsd:dateTime ;
+    rdfs:comment "Latest hotspot time of a live fire event."@en .
+ffonto:hotspotCount a owl:DatatypeProperty ; rdfs:label "hotspot count"@en ; rdfs:domain ffonto:LiveFireEvent ; rdfs:range xsd:integer ;
+    rdfs:comment "Number of hotspots in a live fire event."@en .
+ffonto:totalFrpMW a owl:DatatypeProperty ; rdfs:label "total FRP (MW)"@en ; rdfs:domain ffonto:LiveFireEvent ; rdfs:range xsd:double ;
+    rdfs:comment "Sum of the fire radiative power of the event's hotspots."@en .
+ffonto:frpGrowthRatio a owl:DatatypeProperty ; rdfs:label "FRP growth ratio"@en ; rdfs:domain ffonto:LiveHazard ; rdfs:range xsd:double ;
+    rdfs:comment "FRP of the latest pass divided by FRP of the previous pass (rule R10)."@en .
+ffonto:distanceKm a owl:DatatypeProperty ; rdfs:label "distance (km)"@en ; rdfs:domain ffonto:LiveHazard ; rdfs:range xsd:double ;
+    rdfs:comment "Distance from the site or image to the closest supporting hotspot."@en .
+ffonto:derivedByRule a owl:DatatypeProperty ; rdfs:label "derived by rule"@en ; rdfs:domain ffonto:LiveHazard ; rdfs:range xsd:string ;
+    rdfs:comment "Live rule that derived the hazard (R09-R12)."@en .
+ffonto:derivedAt a owl:DatatypeProperty ; rdfs:label "derived at"@en ; rdfs:domain ffonto:LiveHazard ; rdfs:range xsd:dateTime ;
+    rdfs:comment "When the rule engine derived the hazard."@en .
+ffonto:isQueryLocation a owl:DatatypeProperty ; rdfs:label "is query location"@en ; rdfs:domain ffonto:Site ; rdfs:range xsd:boolean ;
+    rdfs:comment "True for sites registered from a user question (place name, coordinates or a record's centre point)."@en .
+
+# ---- geometry (GeoSPARQL) ----------------------------------------------------
+geo:hasGeometry a owl:ObjectProperty .
+geo:asWKT a owl:DatatypeProperty .
+geo:Geometry a owl:Class .

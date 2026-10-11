@@ -1,0 +1,2 @@
+{"image": "data/figures/fwi_manual_p12.png", "question": "What FWI value marks the start of the high danger class?", "gold_value": 21.3}
+{"image": "data/figures/fwi_trend_example.png", "question": "Is FWI rising or falling over the period shown?", "gold_trend": "up"}

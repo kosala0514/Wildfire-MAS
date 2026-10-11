@@ -1,0 +1,7 @@
+# Rule inputs: FWI danger class per site and day (live weather records, newest first).
+PREFIX ffo: <http://purl.org/ffonto#>
+SELECT ?site ?a ?date ?fwi ?danger WHERE {
+  ?a a ffo:LiveWeatherRecord ; ffo:atSite ?site ; ffo:observationDate ?date ; ffo:fwi ?fwi ;
+     ffo:dangerClass ?danger .
+}
+ORDER BY ?site DESC(?date)
